@@ -75,6 +75,7 @@ ADD ./config/settings.json $CKAN_DIST_CONF_FOLDER/settings.json
 RUN chmod 666  /var/lib/ckan/default/gobar/settings.json
 RUN chmod +x -R $CKAN_INIT/
 RUN chmod 777 -R $CKAN_CONFIG
+RUN apachectl -D FOREGROUND
 
 # Script de inicializacion para ckan.
 CMD ["/etc/ckan_init.d/start_ckan.sh"]

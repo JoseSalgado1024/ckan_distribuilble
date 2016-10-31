@@ -5,7 +5,7 @@
 #  debemos hacer algunas cosas para que todo funcione
 #  correctamente. 
 # ----------------------------------------------------- #
-
+sleep 20
 APACHE2_WSGI=$CKAN_CONFIG/apache.wsgi
 
 # Creamos contexto para CKAN
