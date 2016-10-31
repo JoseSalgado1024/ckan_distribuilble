@@ -6,7 +6,7 @@ MAINTAINER Jose A. Salgado<jose.salgado.wrk@gmail.com>
 ENV DEBIAN_FRONTEND noninteractive
 ENV CKAN_APACHE2_PORT 80
 ENV CKAN_DATAPUSHER_PORT 8800
-ENV CKAN_CONFIG_FILE development.ini
+ENV CKAN_CONFIG_FILE production.ini
 ENV HOME /root
 ENV CKAN_VERSION 2.5.1  
 ENV CKAN_HOME /usr/lib/ckan/default
