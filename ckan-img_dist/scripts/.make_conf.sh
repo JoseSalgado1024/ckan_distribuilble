@@ -28,7 +28,7 @@ write_config () {
       "sqlalchemy.url = ${DATABASE_URL}" \
       "solr_url = ${SOLR_URL}" \
       "ckan.storage_path = ${CKAN_DATA}" \
-      "ckan.plugins = stats text_view image_view recline_view hierarchy_display hierarchy_form gobar_theme datastore datapusher"  \
+      "ckan.plugins = harvest ckan_harvester stats text_view image_view recline_view hierarchy_display hierarchy_form gobar_theme datastore datapusher"  \
       "ckan.auth.create_user_via_api = false" \
       "ckan.auth.create_user_via_web = false" \
       "ckan.locale_default = es" \

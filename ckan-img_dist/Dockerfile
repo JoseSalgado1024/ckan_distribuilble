@@ -13,7 +13,8 @@ ENV CKAN_HOME /usr/lib/ckan/default
 ENV CKAN_CONFIG /etc/ckan/default
 ENV CKAN_DATA /var/lib/ckan
 ENV CKAN_INIT /etc/ckan_init.d
-ENV CKAN_DIST_CONF_FOLDER /var/lib/ckan/default/gobar/
+ENV CKAN_DIST_MEDIA /usr/lib/ckan/default/src/ckanext-gobar-theme/ckanext/gobar_theme/public/user_images
+ENV CKAN_DIST_CONFIG /var/lib/ckan/theme_config
 ENV TERM xterm
 
 # Actualizamos las bases de apt-get!
@@ -37,6 +38,8 @@ RUN apt-get -y install \
             libapache2-mod-wsgi \
             wget \
             nano \
+            redis-server \
+            rabbitmq-server \
             ca-certificates \
             git-core
 
@@ -48,12 +51,11 @@ RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo 
 RUN apt-get -y update && apt-get -y install pgadmin3
 
 
-RUN mkdir -p $CKAN_HOME $CKAN_CONFIG $CKAN_DATA $CKAN_DIST_CONF_FOLDER
+RUN mkdir -p $CKAN_HOME $CKAN_CONFIG $CKAN_DATA 
 RUN virtualenv $CKAN_HOME
 RUN ln -s $CKAN_HOME/src/ckan/ckan/config/who.ini $CKAN_CONFIG/who.ini
-RUN mkdir -p $CKAN_HOME $CKAN_CONFIG $CKAN_DATA
-RUN chown www-data:www-data $CKAN_DATA
-RUN chmod u+rwx $CKAN_DATA
+RUN chown www-data:www-data $CKAN_DATA 
+RUN chmod u+rwx $CKAN_DATA 
 RUN touch /tmp/ckan_service.log
 RUN chmod u+rw /tmp/ckan_service.log
 
@@ -62,28 +64,43 @@ RUN dpkg -i /tmp/python-ckan_2.5-trusty_amd64.deb
 
 # Actualizamos pip
 RUN $CKAN_HOME/bin/pip install --upgrade pip
+RUN $CKAN_HOME/bin/pip install 'requests[security]'
 
 # Instalamos las extensiones de CKAN: GobAR-Theme & Hierarchy 
 RUN $CKAN_HOME/bin/pip install -e "git+https://github.com/datosgobar/distribuible.datos.gob.ar.git#egg=ckanext-gobar_theme"
 RUN $CKAN_HOME/bin/pip install -e "git+https://github.com/datagovuk/ckanext-hierarchy.git#egg=ckanext-hierarchy"
+RUN $CKAN_HOME/bin/pip install -e "git+https://github.com/ckan/ckanext-harvest.git#egg=ckanext-harvest"
+RUN $CKAN_HOME/bin/pip install -r $CKAN_HOME/src/ckanext-harvest/pip-requirements.txt
 
-ADD ./requirements/ckan_default.conf /etc/apache2/sites-enabled/ckan_default.conf 
+RUN mkdir -p $CKAN_DIST_MEDIA $CKAN_DIST_CONFIG 
+RUN chown www-data:www-data $CKAN_DIST_MEDIA $CKAN_DIST_CONFIG
+RUN chmod u+rwx $CKAN_DIST_CONFIG $CKAN_DIST_MEDIA
+ADD ./requirements/ckan_default.conf /etc/apache2/sites-enabled/ckan_default.conf  
 ADD ./scripts $CKAN_INIT
 ADD ./requirements/apache.wsgi $CKAN_CONFIG/apache.wsgi
 ADD ./requirements/datapusher.wsgi /etc/ckan/datapusher.wsgi
-ADD ./config/settings.json $CKAN_DIST_CONF_FOLDER/settings.json
-RUN chmod 666  /var/lib/ckan/default/gobar/settings.json
+ADD ./config/main_info.html $CKAN_HOME/src/ckanext-gobar-theme/ckanext/gobar_theme/templates/package/snippets/main_info.html
+RUN touch $CKAN_DIST_CONFIG/settings.json
+RUN chmod 666  $CKAN_DIST_CONFIG/settings.json
+RUN rm $CKAN_CONFIG/production.ini
 RUN chmod +x -R $CKAN_INIT/
 RUN chmod 777 -R $CKAN_CONFIG
-RUN apachectl -D FOREGROUND
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
+# Autostart Supervisor
+CMD ["/usr/bin/supervisord"]
+# Autostart Nginx
+CMD ["/usr/sbin/nginx","-c","/etc/nginx/nginx.conf"]
+# Autostart Apache2
+CMD ["apachectl","-D","FOREGROUND"]
 # Script de inicializacion para ckan.
 CMD ["/etc/ckan_init.d/start_ckan.sh"]
 
-# Creo volumenes para las diferentes de CKAN.
-# VOLUME $CKAN_CONFIG $CKAN_DATA $CKAN_HOME
+# Creo volumenes DATA, userMedia y Configs del front.
+VOLUME $CKAN_DATA $CKAN_DIST_MEDIA $CKAN_DIST_CONFIG
 
-# Abro el puerto de 80(ad) para Apache y el puerto de 8800(dp) apache.datapusher.wsgi
+
+# Abro el puerto de 80(ad) para NGINX y el puerto de 8800(dp) DATAPUSHER
 EXPOSE $CKAN_APACHE2_PORT $CKAN_DATAPUSHER_PORT
 
 # OK, Limpiamos y nos vamos

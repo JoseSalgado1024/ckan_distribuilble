@@ -9,7 +9,7 @@ services:
         depends_on:
            - pg-ckan
            - solr
-        links:
+        external_links:
            - pg-ckan:db
            - solr:solr
     pg-ckan:

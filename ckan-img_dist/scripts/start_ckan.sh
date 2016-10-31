@@ -5,7 +5,7 @@
 #  debemos hacer algunas cosas para que todo funcione
 #  correctamente. 
 # ----------------------------------------------------- #
-sleep 20
+
 APACHE2_WSGI=$CKAN_CONFIG/apache.wsgi
 
 # Creamos contexto para CKAN
@@ -30,10 +30,11 @@ if [ "$exit_code" -eq "0" ] ; then
 	
 	# Si esta corriendo, detenemos Apache & NginX
 	service apache2 stop && service nginx stop;
-	service apache2 start && service apache2 reload && service apache2 restart && service nginx restart;
+	nginx &
+	service apache2 reload && service apache2 start
 
 	# Conectamos los logs de ckan con la salida de "docker logs"
-	# tail  -f /var/log/apache/ckan_default.error.log
+	tail  -f /var/log/apache/ckan_default.error.log
 	# Si por alguna razon fallan los logs detenemos CKAN-APACHE, el contenedor seguira vivo y funcional
 	while true; do sleep 1000; done
 
