@@ -25,13 +25,13 @@ if [ "$exit_code" -eq "0" ] ; then
 	sed "s/production.ini/$CKAN_CONFIG_FILE/g" $CKAN_CONFIG/apache.wsgi > temp.f && mv temp.f $CKAN_CONFIG/apache.wsgi  	
 
 	# Considerando que CKAN/data va a ser un volumen externo, corrijo permisos
-	chown www-data:www-data $CKAN_DATA
-	chmod u+rwx $CKAN_DATA
+	chown www-data:www-data $CKAN_DATA $CKAN_DIST_MEDIA $CKAN_DIST_CONFIG
+	chmod u+rwx $CKAN_DATA $CKAN_DIST_MEDIA $CKAN_DIST_CONFIG
 	
 	# Si esta corriendo, detenemos Apache & NginX
 	service apache2 stop && service nginx stop;
 	nginx &
-	service apache2 reload && service apache2 start
+	service apache2 reload && service apache2 restart && service nginx restart
 
 	# Conectamos los logs de ckan con la salida de "docker logs"
 	tail  -f /var/log/apache/ckan_default.error.log
